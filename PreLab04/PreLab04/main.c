@@ -20,8 +20,8 @@
 #define LEDS			6
 uint8_t MUX_SEQUENCE	= 0b00000001;
 // Botones de conteo
-#define COUNTUP			2
-#define COUNTDWN		1
+#define COUNTUP			1
+#define COUNTDWN		2
 uint8_t COUNTUP_LAST	= 0;
 uint8_t COUNTDWN_LAST	= 0;
 // Arreglos para lógica de Bit Swizzling
