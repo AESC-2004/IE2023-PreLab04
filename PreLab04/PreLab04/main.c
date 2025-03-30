@@ -24,6 +24,9 @@ uint8_t MUX_SEQUENCE	= 0b00000001;
 #define COUNTDWN		1
 uint8_t COUNTUP_LAST	= 0;
 uint8_t COUNTDWN_LAST	= 0;
+// Arreglos para lógica de Bit Swizzling
+const uint8_t PORTD_PINS[]	= {PORTD0, PORTD1, PORTD2, PORTD3, PORTD4, PORTD6, PORTD7};
+const uint8_t LEDS_BITS[]	= {0,1,2,3,4,5,6};
 // Valores HEX para Displays
 const uint8_t DISP7SEG[16] = {
 	0x5F, 0x06, 0x9B, 0x8F, 0xC6, 0xCD, 0xDD, 0x07, 0xDF, 0xC7,
@@ -32,7 +35,6 @@ const uint8_t DISP7SEG[16] = {
 // ADC
 uint16_t ADC_VALUE		= 0;
 // Variables de conteo
-uint8_t LEDS_VAL		= 0xFF;
 uint8_t COUNT			= 0;
 uint8_t DISP0_VAL		= 0;
 uint8_t DISP1_VAL		= 0;
@@ -45,6 +47,7 @@ void SETUP();
 void initTMR0();
 void initPCINT();
 void initADC();
+void bitSwizzling(uint8_t VALUE);
 
 /*********************************************************************************************************************************************/
 // Main Function
@@ -57,6 +60,7 @@ int main(void)
 		// Acomodamos la lectura del ADC a unidades y décimas
 		// Paso 1: Convertir lectura a milivoltios
 		uint16_t MILLIVOLTS		= (ADC_VALUE * 5000UL)/1024;	// Usamos un "Unisgned Long" para evitar Overflow
+		// Cálculo y subida de unidades y décimas
 		DISP0_VAL = DISP7SEG[(MILLIVOLTS % 1000)/100];			// Calculamos décimas y las sacamos al DISP0
 		DISP1_VAL = DISP7SEG[(MILLIVOLTS)/1000];				// Calculamos unidades y las sacamos al DISP1
 	}
@@ -89,6 +93,7 @@ void SETUP()
 
 void initTMR0()
 {
+	// Usaremos TIM0 en modo NORMAL con PS de 64
 	TCCR0B	= (0 << CS02) | (1 << CS01) | (1 << CS00);
 	TIMSK0	= (1 << TOIE0);
 	TCNT0	= T0VALUE;
@@ -96,12 +101,14 @@ void initTMR0()
 
 void initPCINT()
 {
+	// El ATMEGA32U4 solo cuenta con un vector de Pinchange (PB)
 	PCICR	= (1 << PCIE0);
 	PCMSK0	= (1 << COUNTUP) | (1 << COUNTDWN);
 }
 
 void initADC()
 {
+	// Usaremos el ADC a 125kHz (PS de 8) con Auto Trigger en Free Running Mode con vector de interrupción
 	// Activamos solamente ADC6, REF como VCC y SIN justificación izquierda.
 	ADMUX	= (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (0 << MUX4) | (0 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
 	// Definimos Auto Trigger Source como Free Running mode
@@ -110,6 +117,28 @@ void initADC()
 	ADCSRA	= (1 << ADEN) | (1 << ADSC) | (1 << ADATE) | (0 << ADIF) | (1 << ADIE) | (0 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
+void bitSwizzling(uint8_t VALUE)	// Definimos un parámetro local "VALUE" (Se ingresará COUNT)
+{
+	// Debemos distribuir COUNT así: {PD7, PD6, PD4, PD3, PD2, PD1, PD0, PE6}
+	// Paso 1: Creamos máscaras
+	PORTD &= ~((1 << PORTD7) | (1 << PORTD6) | (1 << PORTD4) | (1 << PORTD3) | (1 << PORTD2) | (1 << PORTD1) | (1 << PORTD0));
+	PORTE &= ~(1 << PORTE6);
+	
+	// Paso 2: Ciclo for de arreglo para PORTD
+	for (uint8_t i = 0; i < 7; i++)
+	{
+		if (VALUE & (1 << LEDS_BITS[i]))
+		{
+			PORTD	|= (1 << PORTD_PINS[i]);
+		}
+	}
+	
+	// Paso 3: Arreglo de PORTE6
+	if (VALUE & (1 << 7))
+	{
+		PORTE		|= (1 << PORTE6);
+	}
+}
 /*********************************************************************************************************************************************/
 // Interrupt routines
 ISR(TIMER0_OVF_vect)
@@ -133,8 +162,8 @@ ISR(TIMER0_OVF_vect)
 		// Si DISP1 estaba encendido, ahora queremos mostrar LEDS
 		// Apagamos DISP1
 		PORTB			&= ~(1 << DISP1);
-		// Cargamos COUNT en PORTD
-		PORTD			= LEDS_VAL;
+		// Cargamos COUNT en PORTD (Usamos la función de Bit Swizzling creada)
+		bitSwizzling(COUNT);
 		// Encendemos LEDS
 		PORTB			|= (1 << LEDS);
 		//Y actualizamos el valor de MUX_SEQUENCE
