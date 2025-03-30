@@ -144,8 +144,10 @@ ISR(TIMER0_OVF_vect)
 
 ISR(PCINT0_vect)
 {
-	//Revisamos qué botón fue presionado
-	if ((PINB & ((1 << COUNTUP))) == (1 << COUNTUP))
+	// Revisamos qué botón fue presionado
+	// 0 LÓGICO = PRESSED
+	// 1 LÓGICO = NOT PRESSED
+	if ((PINB & ((1 << COUNTUP))) == (0 << COUNTUP)) 
 	{
 		//Si COUNTUP fue presionado...
 		//Revisamos su estado anterior. Si antes estaba presionado, revisamos COUNTDWN, y...
@@ -159,11 +161,11 @@ ISR(PCINT0_vect)
 			COUNT++;
 			if (COUNT > 15) COUNT = 0;
 		}
-	} else if ((PINB & ((1 << COUNTUP))) == (0 << COUNTUP))
+	} else if ((PINB & ((1 << COUNTUP))) == (1 << COUNTUP))
 	{
 		COUNTUP_LAST = 0;
 	}
-	if ((PINB & ((1 << COUNTDWN))) == (1 << COUNTDWN))
+	if ((PINB & ((1 << COUNTDWN))) == (0 << COUNTDWN))
 	{
 		//Si COUNTDWN fue presionado...
 		//Revisamos su estado anterior. Si antes estaba presionado, nos salimos de la rutina, y...
@@ -177,7 +179,7 @@ ISR(PCINT0_vect)
 			COUNT--;
 			if (COUNT == 0xFF) COUNT = 15;
 		}
-	} else if ((PINB & ((1 << COUNTDWN))) == (0 << COUNTDWN))
+	} else if ((PINB & ((1 << COUNTDWN))) == (1 << COUNTDWN))
 	{
 		COUNTDWN_LAST = 0;
 	}
