@@ -157,6 +157,7 @@ ISR(PCINT0_vect)
 		{
 			COUNTUP_LAST = 1;
 			COUNT++;
+			if (COUNT > 15) COUNT = 0;
 		}
 	} else if ((PINB & ((1 << COUNTUP))) == (0 << COUNTUP))
 	{
@@ -174,6 +175,7 @@ ISR(PCINT0_vect)
 		{
 			COUNTDWN_LAST = 1;
 			COUNT--;
+			if (COUNT == 0xFF) COUNT = 15;
 		}
 	} else if ((PINB & ((1 << COUNTDWN))) == (0 << COUNTDWN))
 	{
