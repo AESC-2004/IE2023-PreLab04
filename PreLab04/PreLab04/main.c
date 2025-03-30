@@ -60,7 +60,7 @@ void SETUP()
 	DDRD	= 0xFF;
 	PORTD	= 0x00;
 	// PORTB: Transistores para multiplexación		|	PORTB: 0XXX 0000
-	DDRD	= 0b01110000;
+	DDRB	= 0b01110000;
 	PORTB	= 0x00;
 	initTMR0();
 	// Rehabilitamos interrupciones
