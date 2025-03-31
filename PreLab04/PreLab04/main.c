@@ -61,8 +61,8 @@ int main(void)
 		// Paso 1: Convertir lectura a milivoltios
 		uint16_t MILLIVOLTS		= (ADC_VALUE * 5000UL)/1024;	// Usamos un "Unisgned Long" para evitar Overflow
 		// Cálculo y subida de unidades y décimas
-		DISP0_VAL = DISP7SEG[(MILLIVOLTS % 1000)/100];			// Calculamos décimas y las sacamos al DISP0
-		DISP1_VAL = DISP7SEG[(MILLIVOLTS)/1000];				// Calculamos unidades y las sacamos al DISP1
+		DISP0_VAL = DISP7SEG[9-((MILLIVOLTS % 1000)/100)];			// Calculamos décimas y las sacamos al DISP0 (Invertimos restando "9-x")
+		DISP1_VAL = DISP7SEG[4-((MILLIVOLTS)/1000)];				// Calculamos unidades y las sacamos al DISP1 (Invertimos restando "4-x")
 	}
 }
 
